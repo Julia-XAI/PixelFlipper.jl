@@ -1,4 +1,17 @@
 [deps]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+DataAugmentation = "88a5189c-e7ff-4f85-ac6b-e6158070f02e"
+ExplainableAI = "4f1bc3e1-d60d-4ed0-9367-9bdff9846d3b"
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+ImageIO = "82e4d734-157c-48bb-816b-45c225c6df19"
+ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
+Metalhead = "dbeba491-748d-5e0e-a39e-b530a07fa0cc"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+VisionHeatmaps = "27106da1-f8bc-4ca8-8c66-9b8289f1e035"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+
+[compat] 
+Flux = "0.14"
