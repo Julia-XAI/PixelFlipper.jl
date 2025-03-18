@@ -1,27 +1,20 @@
 """
     AbstractImputer
 
-Abstract supertype of all imputers. Given an input and indices from a selector, this imputes values at the given index.
-
-Currently, imputing is only supported in the space of floating-point input arrays (`AbstractArrayImputer`). 
-In the future, imputers in `RGB` image space could be supported as well.
+Abstract supertype of all imputers. Given an input and indices from a selector, this imputes values of an array at the given index.
 """
 abstract type AbstractImputer end
 
-# Nice to have in the future:
-# abstract type AbstractArrayImputer <: AbstractImputer end
-# abstract type AbstractImageImputer <: AbstractImputer end
-
 """
-    ConstantImputer()
+    ConstantImputer(value)
 
-Imputer 
-
-Requires a an `AbstractPixelSelector`.
+Imputes a constant value into a given array. Defaults to `0.0f0`. 
 """
-struct ConstantImputer{T,S<:AbstractSelector} <: AbstractImputer
-    val::T
-    selector::S
+@kwdef struct ConstantImputer{T} <: AbstractImputer
+    val::T = 0.0f0
 end
-ConstantImputer(; val = 0.0, selector::AbstractSelector = PixelSelector()) =
-    ConstantImputer(val, selector)
+
+function impute(imp::ConstantImputer, x, is)
+    x[is] .= imp.val
+    return x
+end

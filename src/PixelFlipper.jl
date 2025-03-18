@@ -9,32 +9,44 @@ include("utils.jl")
 include("selector.jl")
 include("imputer.jl")
 
+const DEFAULT_SELECTOR = PixelSelector()
+const DEFAULT_IMPUTER = ConstantImputer()
+
 """
-    PixelFlipping(analyzer::AbstractXAIMethod, model, input)
+    PixelFlipping(model, input, explanation::Explanation)
+    PixelFlipping(model, input, values::AbstractArray) 
+    PixelFlipping(model, input, analyzer::AbstractXAIMethod)
+
+Compute pixel flipping curves for given model, input batch and explanation.
 
 ## Keyword arguments
-- `reduce::Symbol`: Selects how color channels are reduced to a single number to apply a color scheme.
-  The following methods can be selected, which are then applied over the color channels
-  for each "pixel" in the array:
-  - `:sum`: sum up color channels
-  - `:norm`: compute 2-norm over the color channels
-  - `:maxabs`: compute `maximum(abs, x)` over the color channels
-  - `:sumabs`: compute `sum(abs, x)` over the color channels
-  - `:abssum`: compute `abs(sum(x))` over the color channels
-  Defaults to `:$DEFAULT_REDUCE`.
+- `selector::AbstractSelector`: Specify input selector. Defaults to `PixelSelector(; reduce=:norm)` 
+- `imputer::AbstractImputer`: Specify input imputer. Defaults to `ConstantImputer()` of value zero.
 """
-struct PixelFlipping{A,M,I<:AbstractImputer}
-    analyzer::A
+@kwdef struct PixelFlipping{
+    M,AI<:AbstractArray{T,4},AV<:AbstractArray{T,4},S<:AbstractSelector,I<:AbstractImputer
+} where {T}
     model::M
+    input::AI
+    values::AV
+    selector::S
     imputer::I
     steps::Int
+end
+
+function PixelFlipping(model, input, expl::Explanation; kwargs...)
+    return PixelFlipping(model, input, expl.val; kwargs...)
+end
+
+function PixelFlipping(model, input, analyzer::AbstractXAIMethod; kwargs...)
+    expl = analyze(input, analyzer)
+    return PixelFlipping(model, input, expl; kwargs...)
 end
 
 struct Result{T}
     mif::Vector{T}
     lif::Vector{T}
 end
-
 
 export PixelFlipping, Result, ConstantImputer, PixelSelector
 

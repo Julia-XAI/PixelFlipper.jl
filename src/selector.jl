@@ -1,17 +1,9 @@
 """
     AbstractSelector
 
-Abstract supertype of all selectors. Given an `Explanation`, all `AbstractSelector` return an iterator of values to be imputed.
-
-Currently, only the selection of pixels is supported.
-In the future, this could be extended to subpixels or a superpixels.
+Abstract supertype of all selectors. Given an `Explanation` or WHCN array, all `AbstractSelector` return an iterator of values to be imputed.
 """
 abstract type AbstractSelector end
-abstract type AbstractPixelSelector <: AbstractSelector end
-
-# Nice to have in the future:
-# abstract type AbstractSubPixelSelector <: AbstractSelector end
-# abstract type AbstractSuperPixelSelector <: AbstractSelector end
 
 const DEFAULT_REDUCE = :norm
 
@@ -36,9 +28,18 @@ Reduces color channels in an `Explanation` according to `reduce` and returns an 
     reduce::Symbol = DEFAULT_REDUCE
 end
 
-function select(sel::PixelSelector, expl::Explanation)
-    vals = reduce_color_channel(expl.val, sel.reduce)
-    return sortinds(vals)
+function select(sel::PixelSelector, x::AbstractArray{T,4}) where {T}
+    x_reduced = reduce_color_channel(x, sel.reduce)
+    I_reduced = sortinds(x_reduced)
+
+    nchannels = size(x, 3)
+    I = select_all_color_channels.(I_reduced, nchannels)
+    return I
+end
+
+function select_all_color_channels(I::CartesianIndex, nchannels)
+    iW, iH, _, iN = Tuple(I)
+    return CartesianIndices((iW, iH, 1:nchannels, iN))
 end
 
 #=======#
@@ -50,25 +51,29 @@ end
 
 Return `CartesianIndices` of `A` sorted by decreasing value.
 """
-function sortinds(A::AbstractArray)
-    I = sortperm(A[:]; rev = true)
-    return CartesianIndices(A)[I]
+function sortinds(A::AbstractArray{T,3}) where {T}
+    idx_perm = sortperm(A[:]; rev=true)
+    return CartesianIndices(A)[idx_perm]
+end
+function sortinds(A::AbstractArray{T,4}) where {T}
+    transposed = [[row[i] for row in data] for i in 1:length(data[1])]
+    return sortinds.(eachslice(A; dims=4))
 end
 
-function reduce_color_channel(val::AbstractArray, method::Symbol)
+function reduce_color_channel(val::AbstractArray{T,4}, method::Symbol) where {T}
     init = zero(eltype(val))
     if size(val, 3) == 1 # nothing to reduce
         return val
     elseif method == :sum
-        return reduce(+, val; dims = 3)
+        return reduce(+, val; dims=3)
     elseif method == :maxabs
-        return reduce((c...) -> maximum(abs.(c)), val; dims = 3, init = init)
+        return reduce((c...) -> maximum(abs.(c)), val; dims=3, init=init)
     elseif method == :norm
-        return reduce((c...) -> sqrt(sum(c .^ 2)), val; dims = 3, init = init)
+        return reduce((c...) -> sqrt(sum(c .^ 2)), val; dims=3, init=init)
     elseif method == :sumabs
-        return reduce((c...) -> sum(abs, c), val; dims = 3, init = init)
+        return reduce((c...) -> sum(abs, c), val; dims=3, init=init)
     elseif method == :abssum
-        return reduce((c...) -> abs(sum(c)), val; dims = 3, init = init)
+        return reduce((c...) -> abs(sum(c)), val; dims=3, init=init)
     end
     throw( # else
         ArgumentError(
