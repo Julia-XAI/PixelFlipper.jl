@@ -28,56 +28,60 @@ Reduces color channels in an `Explanation` according to `reduce` and returns an 
     reduce::Symbol = DEFAULT_REDUCE
 end
 
-function select(sel::PixelSelector, x::AbstractArray{T,4}) where {T}
+# The type of index we are working with. Only required because I want to pre-allocate memory for it.
+const PixelIndices = CartesianIndices{
+    4,Tuple{Base.OneTo{Int64},Base.OneTo{Int64},UnitRange{Int64},Base.OneTo{Int64}}
+}
+
+"""
+    select(x, selector)
+
+Return matrix of `CartesianIndices` of `x` sorted by decreasing value.
+Requires `x` to be in WHCN format, as each column in the output corresponds to an inputs in the batch.
+
+## Example
+```julia
+julia> selector = PixelSelector()
+PixelSelector(:norm)
+
+julia> A = randn(2, 2, 1, 2)
+2×2×1×2 Array{Float64, 4}:
+[:, :, 1, 1] =
+ -0.394689  -0.240333
+  0.070783  -0.129964
+
+[:, :, 1, 2] =
+ 0.858218  1.79357
+ 1.81366   0.152386
+
+julia> PixelFlipper.select(A, selector)
+4×2 Matrix{CartesianIndices{4, Tuple{Base.OneTo{Int64}, Base.OneTo{Int64}, UnitRange{Int64}, Base.OneTo{Int64}}}}:
+ CartesianIndices((2, 1, 1:1, 1))  CartesianIndices((2, 1, 1:1, 2))
+ CartesianIndices((2, 2, 1:1, 1))  CartesianIndices((1, 2, 1:1, 2))
+ CartesianIndices((1, 2, 1:1, 1))  CartesianIndices((1, 1, 1:1, 2))
+ CartesianIndices((1, 1, 1:1, 1))  CartesianIndices((2, 2, 1:1, 2))
+```
+"""
+function select(x::AbstractWHCN, sel::PixelSelector)
+    w, h, c, n = size(x)
+
+    # Reduce color channel
     x_reduced = reduce_color_channel(x, sel.reduce)
-    I_reduced = sortinds(x_reduced)
 
-    nchannels = size(x, 3)
-    I = select_all_color_channels.(I_reduced, nchannels)
-    return I
-end
+    # Allocate output matrix of indices
+    sorted_indices = Matrix{PixelIndices}(undef, w * h, n)
 
-function select_all_color_channels(I::CartesianIndex, nchannels)
-    iW, iH, _, iN = Tuple(I)
-    return CartesianIndices((iW, iH, 1:nchannels, iN))
-end
+    # For each sample in batch, compute indices of sorted values 
+    for (j, slice) in enumerate(eachslice(x_reduced; dims=4))
+        # Compute sorted vector of `CartesianIndex`es
+        i_perm = sortperm(slice[:]; rev=true)
+        Is = CartesianIndices(slice)[i_perm]
 
-#=======#
-# Utils #
-#=======#
-
-"""
-    sortinds(A)
-
-Return `CartesianIndices` of `A` sorted by decreasing value.
-"""
-function sortinds(A::AbstractArray{T,3}) where {T}
-    idx_perm = sortperm(A[:]; rev=true)
-    return CartesianIndices(A)[idx_perm]
-end
-function sortinds(A::AbstractArray{T,4}) where {T}
-    transposed = [[row[i] for row in data] for i in 1:length(data[1])]
-    return sortinds.(eachslice(A; dims=4))
-end
-
-function reduce_color_channel(val::AbstractArray{T,4}, method::Symbol) where {T}
-    init = zero(eltype(val))
-    if size(val, 3) == 1 # nothing to reduce
-        return val
-    elseif method == :sum
-        return reduce(+, val; dims=3)
-    elseif method == :maxabs
-        return reduce((c...) -> maximum(abs.(c)), val; dims=3, init=init)
-    elseif method == :norm
-        return reduce((c...) -> sqrt(sum(c .^ 2)), val; dims=3, init=init)
-    elseif method == :sumabs
-        return reduce((c...) -> sum(abs, c), val; dims=3, init=init)
-    elseif method == :abssum
-        return reduce((c...) -> abs(sum(c)), val; dims=3, init=init)
+        # Rewrite each `CartesianIndex` into a `CartesianIndices` covering all color channels 
+        for (i, I) in enumerate(Is)
+            iw, ih, _ = Tuple(I) # unpack CartesianIndex
+            sorted_indices[i, j] = CartesianIndices((iw, ih, 1:c, j))
+        end
     end
-    throw( # else
-        ArgumentError(
-            "`reduce` :$method not supported, should be :maxabs, :sum, :norm, :sumabs, or :abssum",
-        ),
-    )
+    return sorted_indices
 end
