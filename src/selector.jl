@@ -24,7 +24,7 @@ Reduces color channels in an `Explanation` according to `reduce` and returns an 
   - `:abssum`: compute `abs(sum(x))` over the color channels
   Defaults to `:$DEFAULT_REDUCE`.
 """
-@kwdef struct PixelSelector
+@kwdef struct PixelSelector <: AbstractSelector
     reduce::Symbol = DEFAULT_REDUCE
 end
 
