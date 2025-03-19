@@ -3,13 +3,15 @@ module PixelFlipper
 using XAIBase
 using NNlib: softmax
 using Base: @kwdef
+using ProgressMeter: @showprogress
+using Statistics: mean
+using UnicodePlots: lineplot, lineplot!
 
 const AbstractWHCN{T} = AbstractArray{T,4}
 
 include("utils.jl")
 include("selector.jl")
 include("imputer.jl")
-include("run.jl")
 
 const DEFAULT_SELECTOR = PixelSelector()
 const DEFAULT_IMPUTER = ConstantImputer()
@@ -35,6 +37,8 @@ Computes pixel flipping curves.
     steps::Int = 20
 end
 
+include("eval.jl")
+
 # Tiny results wrapper to dispatch plots on.
 struct PixelFlippingResult{T}
     MIF::Vector{T}
@@ -43,11 +47,22 @@ end
 
 mif(res::PixelFlippingResult) = res.MIF
 lif(res::PixelFlippingResult) = res.LIF
-srg(res::PixelFlippingResult) = sum(res.MIF - res.LIF) / steps(res) # integrate area between MIF and LIF
+srg(res::PixelFlippingResult) = sum(max.(0, res.MIF - res.LIF)) / steps(res) # integrate area between MIF and LIF
 steps(res::PixelFlippingResult) = length(res.MIF) - 1
 
-export PixelFlipping, run
+function unicode_plot(res::PixelFlippingResult)
+    MIF = mif(res)
+    LIF = lif(res)
+    x = range(0, 100, length=length(MIF))
+    plt = lineplot(x, MIF, title="Pixel flipping curve (SRG=$(srg(res)))", name="MIF", xlabel="Occlusion (%)", ylabel="p")
+    lineplot!(plt, x, LIF, color=:cyan, name="LIF")
+    return plt
+end
+
+export PixelFlipping, evaluate
 export PixelFlippingResult
 export ConstantImputer, PixelSelector
+export mif, lif, srg, steps
+export unicode_plot
 
 end # module

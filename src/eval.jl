@@ -1,11 +1,13 @@
 """
-    run(pixelflipping, model, input, explanation::Explanation)
-    run(pixelflipping, model, input, values::AbstractArray) 
-    run(pixelflipping, model, input, analyzer::AbstractXAIMethod)
+    evaluate(pixelflipping, model, input, explanation::Explanation)
+    evaluate(pixelflipping, model, input, values::AbstractArray) 
+    evaluate(pixelflipping, model, input, analyzer::AbstractXAIMethod)
 
 Run the `PixelFlipping` method on the given model, input and explanation.
 """
-function run(pf::PixelFlipping, model, input::AbstractWHCN{T}, x::AbstractWHCN) where {T}
+function evaluate(
+    pf::PixelFlipping, model, input::AbstractWHCN{T}, x::AbstractWHCN
+) where {T}
     selection = select(x, pf.selector)
     n, batchsize = size(selection)
 
@@ -25,7 +27,9 @@ function run(pf::PixelFlipping, model, input::AbstractWHCN{T}, x::AbstractWHCN) 
     ## Compute MIF curve
     input_mif = deepcopy(input)
     npart = ceil(Int, n / pf.steps) # length of a partition
-    for (i, range) in Iterators.enumerate(Iterators.partition(1:n, npart))
+    @showprogress desc = "Computing MIF curve..." for (i, range) in Iterators.enumerate(
+        Iterators.partition(1:n, npart)
+    )
         # Modify input in-place, iterating over multiple rows of selection at a time
         for CI in selection[range, :]
             impute!(input_mif, CI, pf.imputer)
@@ -38,7 +42,9 @@ function run(pf::PixelFlipping, model, input::AbstractWHCN{T}, x::AbstractWHCN) 
 
     ## Compute LIF curve
     input_lif = deepcopy(input)
-    for (i, range) in Iterators.enumerate(Iterators.partition(n:-1:1, npart))
+    @showprogress desc = "Computing LIF curve..." for (i, range) in Iterators.enumerate(
+        Iterators.partition(n:-1:1, npart)
+    )
         # Modify input in-place, iterating over multiple rows of selection at a time
         for CI in selection[range, :]
             impute!(input_lif, CI, pf.imputer)
@@ -58,11 +64,13 @@ function mean_probability(output, output_selection)
 end
 
 # Convenient ways to call PixelFlipping using XAIBase API
-function run(pf::PixelFlipping, model, input::AbstractWHCN, expl::Explanation)
-    return run(pf, model, input, expl.val)
+function evaluate(pf::PixelFlipping, model, input::AbstractWHCN, expl::Explanation)
+    return evaluate(pf, model, input, expl.val)
 end
 
-function run(pf::PixelFlipping, model, input::AbstractWHCN, analyzer::AbstractXAIMethod;)
+function evaluate(
+    pf::PixelFlipping, model, input::AbstractWHCN, analyzer::AbstractXAIMethod;
+)
     expl = analyze(input, analyzer)
-    return run(pf, model, input, expl)
+    return evaluate(pf, model, input, expl)
 end

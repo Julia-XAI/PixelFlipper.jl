@@ -72,7 +72,7 @@ function select(x::AbstractWHCN, sel::PixelSelector)
     sorted_indices = Matrix{PixelIndices}(undef, w * h, n)
 
     # For each sample in batch, compute indices of sorted values 
-    for (j, slice) in enumerate(eachslice(x_reduced; dims=4))
+    for (j, slice) in Iterators.enumerate(eachslice(x_reduced; dims=4))
         # Compute sorted vector of `CartesianIndex`es
         i_perm = sortperm(slice[:]; rev=true)
         Is = CartesianIndices(slice)[i_perm]
