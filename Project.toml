@@ -3,5 +3,17 @@ uuid = "9cb4295b-5d58-4144-a541-8c565585ad28"
 authors = ["Adrian Hill <gh@adrianhill.de>"]
 version = "0.1.0-DEV"
 
+[deps]
+NNlib = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
+XAIBase = "9b48221d-a747-4c1b-9860-46a1d8ba24a7"
+
 [compat]
+NNlib = "0.9"
+ProgressMeter = "1"
+Statistics = "1"
+UnicodePlots = "3"
+XAIBase = "4"
 julia = "1.10"

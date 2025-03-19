@@ -4,7 +4,7 @@ CurrentModule = PixelFlipper
 
 # PixelFlipper
 
-Documentation for [PixelFlipper](https://github.com/adrhill/PixelFlipper.jl).
+Documentation for [PixelFlipper](https://github.com/Julia-XAI/PixelFlipper.jl).
 
 ```@index
 ```
