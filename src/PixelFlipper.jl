@@ -53,9 +53,16 @@ steps(res::PixelFlippingResult) = length(res.MIF) - 1
 function unicode_plot(res::PixelFlippingResult)
     MIF = mif(res)
     LIF = lif(res)
-    x = range(0, 100, length=length(MIF))
-    plt = lineplot(x, MIF, title="Pixel flipping curve (SRG=$(srg(res)))", name="MIF", xlabel="Occlusion (%)", ylabel="p")
-    lineplot!(plt, x, LIF, color=:cyan, name="LIF")
+    x = range(0, 100; length=length(MIF))
+    plt = lineplot(
+        x,
+        MIF;
+        title="Pixel flipping curve (SRG=$(srg(res)))",
+        name="MIF",
+        xlabel="Occlusion (%)",
+        ylabel="p",
+    )
+    lineplot!(plt, x, LIF; color=:cyan, name="LIF")
     return plt
 end
 
