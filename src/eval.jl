@@ -14,6 +14,7 @@ function evaluate(
     # Allocate outputs
     MIF = Vector{T}(undef, pf.steps + 1) # Most influential first
     LIF = Vector{T}(undef, pf.steps + 1) # Least influential first
+    occl = collect(range(0.0f0, 1.0f0; length=pf.steps + 1))
 
     # Run initial forward pass
     output = model(input)
@@ -25,8 +26,8 @@ function evaluate(
     LIF[1] = pmean
 
     ## Compute MIF curve
-    input_mif = deepcopy(input)
     npart = ceil(Int, n / pf.steps) # length of a partition
+    input_mif = deepcopy(input)
     @showprogress desc = "Computing MIF curve..." for (i, range) in Iterators.enumerate(
         Iterators.partition(1:n, npart)
     )
@@ -55,7 +56,7 @@ function evaluate(
         LIF[i + 1] = mean_probability(output, output_selection)
     end
 
-    return PixelFlippingResult(MIF, LIF)
+    return PixelFlippingResult(MIF, LIF, occl)
 end
 
 function mean_probability(output, output_selection)
