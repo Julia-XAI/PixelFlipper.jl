@@ -28,11 +28,6 @@ Reduces color channels in an `Explanation` according to `reduce` and returns an 
     reduce::Symbol = DEFAULT_REDUCE
 end
 
-# The type of index we are working with. Only required because I want to pre-allocate memory for it.
-const PixelIndices = CartesianIndices{
-    4,Tuple{Base.OneTo{Int64},Base.OneTo{Int64},UnitRange{Int64},Base.OneTo{Int64}}
-}
-
 """
     select(x, selector)
 
@@ -44,22 +39,24 @@ Requires `x` to be in WHCN format, as each column in the output corresponds to a
 julia> selector = PixelSelector()
 PixelSelector(:norm)
 
-julia> A = randn(2, 2, 1, 2)
-2×2×1×2 Array{Float64, 4}:
+julia> A = randn(1, 2, 2, 2)
+1×2×2×2 Array{Float64, 4}:
 [:, :, 1, 1] =
- -0.394689  -0.240333
-  0.070783  -0.129964
+ -1.9275  -3.01383
+
+[:, :, 2, 1] =
+ -0.424713  1.24167
 
 [:, :, 1, 2] =
- 0.858218  1.79357
- 1.81366   0.152386
+ -1.36198  1.21235
+
+[:, :, 2, 2] =
+ -1.75508  -0.700117
 
 julia> PixelFlipper.select(A, selector)
-4×2 Matrix{CartesianIndices{4, Tuple{Base.OneTo{Int64}, Base.OneTo{Int64}, UnitRange{Int64}, Base.OneTo{Int64}}}}:
- CartesianIndices((2, 1, 1:1, 1))  CartesianIndices((2, 1, 1:1, 2))
- CartesianIndices((2, 2, 1:1, 1))  CartesianIndices((1, 2, 1:1, 2))
- CartesianIndices((1, 2, 1:1, 1))  CartesianIndices((1, 1, 1:1, 2))
- CartesianIndices((1, 1, 1:1, 1))  CartesianIndices((2, 2, 1:1, 2))
+2×4 Matrix{CartesianIndex{4}}:
+ CartesianIndex(1, 2, 1, 1)  CartesianIndex(1, 2, 2, 1)  CartesianIndex(1, 1, 1, 2)  CartesianIndex(1, 1, 2, 2)
+ CartesianIndex(1, 1, 1, 1)  CartesianIndex(1, 1, 2, 1)  CartesianIndex(1, 2, 1, 2)  CartesianIndex(1, 2, 2, 2)
 ```
 """
 function select(x::AbstractWHCN, sel::PixelSelector)
@@ -69,10 +66,10 @@ function select(x::AbstractWHCN, sel::PixelSelector)
     x_reduced = reduce_color_channel(x, sel.reduce)
 
     # Allocate output matrix of indices
-    sorted_indices = Matrix{PixelIndices}(undef, w * h, n)
+    sorted_indices = Matrix{CartesianIndex{4}}(undef, w * h, c * n)
 
     # For each sample in batch, compute indices of sorted values 
-    for (j, slice) in Iterators.enumerate(eachslice(x_reduced; dims=4))
+    for (in, slice) in Iterators.enumerate(eachslice(x_reduced; dims=4))
         # Compute sorted vector of `CartesianIndex`es
         i_perm = sortperm(slice[:]; rev=true)
         Is = CartesianIndices(slice)[i_perm]
@@ -80,7 +77,9 @@ function select(x::AbstractWHCN, sel::PixelSelector)
         # Rewrite each `CartesianIndex` into a `CartesianIndices` covering all color channels 
         for (i, I) in enumerate(Is)
             iw, ih, _ = Tuple(I) # unpack CartesianIndex
-            sorted_indices[i, j] = CartesianIndices((iw, ih, 1:c, j))
+            for ic in 1:c
+                sorted_indices[i, ic + c * (in - 1)] = CartesianIndex((iw, ih, ic, in))
+            end
         end
     end
     return sorted_indices
