@@ -14,7 +14,4 @@ Imputes a constant value into a given array. Defaults to `0.0f0`.
     val::T = 0.0f0
 end
 
-function impute!(x, I::CartesianIndex, imp::ConstantImputer)
-    x[I] = imp.val
-    return x
-end
+impute!(x, imp::ConstantImputer) = fill!(x, imp.val)

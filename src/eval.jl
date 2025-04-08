@@ -8,8 +8,11 @@ Run the `PixelFlipping` method on the given model, input and explanation.
 function evaluate(
     pf::PixelFlipping, model, input::AbstractWHCN{T}, x::AbstractWHCN
 ) where {T}
-    selection = select(x, pf.selector)
+    selection = select(Array(x), pf.selector)
     n, batchsize = size(selection)
+
+    # GPU support
+    selection = pf.device(selection)
 
     # Allocate outputs
     MIF = Vector{T}(undef, pf.steps + 1) # Most influential first
@@ -31,9 +34,8 @@ function evaluate(
     p_mif = Progress(pf.steps; desc="Computing MIF curve...", showspeed=pf.show_progress)
     for (i, range) in Iterators.enumerate(Iterators.partition(1:n, npart))
         # Modify input in-place, iterating over multiple rows of selection at a time
-        for CI in selection[range, :]
-            impute!(input_mif, CI, pf.imputer)
-        end
+        idxs = selection[range, :]
+        impute!(input_mif[idxs], pf.imputer)
 
         # Run new forward pass
         output = model(input_mif)
@@ -46,9 +48,8 @@ function evaluate(
     p_lif = Progress(pf.steps; desc="Computing LIF curve...", showspeed=pf.show_progress)
     for (i, range) in Iterators.enumerate(Iterators.partition(n:-1:1, npart))
         # Modify input in-place, iterating over multiple rows of selection at a time
-        for CI in selection[range, :]
-            impute!(input_lif, CI, pf.imputer)
-        end
+        idxs = selection[range, :]
+        impute!(input_lif[idxs], pf.imputer)
 
         # Run new forward pass
         output = model(input_lif)

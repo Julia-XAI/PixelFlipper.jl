@@ -28,14 +28,16 @@ Computes pixel flipping curves.
 - `imputer::AbstractImputer`: Specify input imputer. Defaults to `$DEFAULT_IMPUTER` of value zero.
 - `steps::Int`: Specify number of imputation steps. Has to be smaller than the amount of selectable inputs in a sample. Defaults to `25`.
 - `show_progress:Bool`: Show progress meter while sampling augmentations. Defaults to `true`.
+- `device`: Select array type to run pixel flipping on, e.g. CUDA.jl's `cu` for GPU support. Defaults to CPU `Array`.
 """
 @kwdef struct PixelFlipping{
-    S<:AbstractSelector,I<:AbstractImputer,O<:AbstractOutputSelector
+    S<:AbstractSelector,I<:AbstractImputer,O<:AbstractOutputSelector,D
 }
     selector::S = DEFAULT_SELECTOR
     imputer::I = DEFAULT_IMPUTER
     output_selector::O = DEFAULT_OUTPUT_SELECTOR
     steps::Int = 20
+    device::D = Array
     show_progress::Bool = true
 end
 
