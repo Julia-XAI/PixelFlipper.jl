@@ -28,9 +28,8 @@ function evaluate(
     ## Compute MIF curve
     npart = ceil(Int, n / pf.steps) # length of a partition
     input_mif = deepcopy(input)
-    @showprogress desc = "Computing MIF curve..." for (i, range) in Iterators.enumerate(
-        Iterators.partition(1:n, npart)
-    )
+    p_mif = Progress(pf.steps; desc="Computing MIF curve...", showspeed=pf.show_progress)
+    for (i, range) in Iterators.enumerate(Iterators.partition(1:n, npart))
         # Modify input in-place, iterating over multiple rows of selection at a time
         for CI in selection[range, :]
             impute!(input_mif, CI, pf.imputer)
@@ -39,13 +38,13 @@ function evaluate(
         # Run new forward pass
         output = model(input_mif)
         MIF[i + 1] = mean_probability(output, output_selection)
+        next!(p_mif)
     end
 
     ## Compute LIF curve
     input_lif = deepcopy(input)
-    @showprogress desc = "Computing LIF curve..." for (i, range) in Iterators.enumerate(
-        Iterators.partition(n:-1:1, npart)
-    )
+    p_lif = Progress(pf.steps; desc="Computing LIF curve...", showspeed=pf.show_progress)
+    for (i, range) in Iterators.enumerate(Iterators.partition(n:-1:1, npart))
         # Modify input in-place, iterating over multiple rows of selection at a time
         for CI in selection[range, :]
             impute!(input_lif, CI, pf.imputer)
@@ -54,6 +53,7 @@ function evaluate(
         # Run new forward pass
         output = model(input_lif)
         LIF[i + 1] = mean_probability(output, output_selection)
+        next!(p_lif)
     end
 
     return PixelFlippingResult(MIF, LIF, occl)

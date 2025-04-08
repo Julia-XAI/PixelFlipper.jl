@@ -3,7 +3,7 @@ module PixelFlipper
 using XAIBase
 using NNlib: softmax
 using Base: @kwdef
-using ProgressMeter: @showprogress
+using ProgressMeter: Progress, next!
 using Statistics: mean
 using UnicodePlots: lineplot, lineplot!
 
@@ -27,6 +27,7 @@ Computes pixel flipping curves.
 - `selector::AbstractSelector`: Specify input selector. Defaults to `$DEFAULT_SELECTOR`.
 - `imputer::AbstractImputer`: Specify input imputer. Defaults to `$DEFAULT_IMPUTER` of value zero.
 - `steps::Int`: Specify number of imputation steps. Has to be smaller than the amount of selectable inputs in a sample. Defaults to `25`.
+- `show_progress:Bool`: Show progress meter while sampling augmentations. Defaults to `true`.
 """
 @kwdef struct PixelFlipping{
     S<:AbstractSelector,I<:AbstractImputer,O<:AbstractOutputSelector
@@ -35,6 +36,7 @@ Computes pixel flipping curves.
     imputer::I = DEFAULT_IMPUTER
     output_selector::O = DEFAULT_OUTPUT_SELECTOR
     steps::Int = 20
+    show_progress::Bool = true
 end
 
 include("result.jl")
