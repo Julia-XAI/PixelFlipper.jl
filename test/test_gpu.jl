@@ -25,16 +25,19 @@ val_gpu = device(val)
 
 @testset "Run pixel flipping (CPU)" begin
     pf = PixelFlipping(; steps=10, device=Array, show_progress=false)
-    @test_nowarn evaluate(pf, model, input, val)
+    res = evaluate(pf, model, input, val)
+    @test res isa PixelFlippingResult
 end
 
 @testset "Run pixel flipping (GPU)" begin
     pf = PixelFlipping(; steps=10, device=device, show_progress=false)
     @testset "GPU explanation" begin
-        @test_nowarn evaluate(pf, model_gpu, input_gpu, val_gpu)
+        res = evaluate(pf, model_gpu, input_gpu, val_gpu)
+        @test res isa PixelFlippingResult
     end
     # This should be avoided, but can happen when loading explanations from files
     @testset "CPU explanation" begin
-        @test_nowarn evaluate(pf, model_gpu, input_gpu, val)
+        res = evaluate(pf, model_gpu, input_gpu, val)
+        @test res isa PixelFlippingResult
     end
 end
