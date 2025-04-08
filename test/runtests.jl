@@ -11,4 +11,7 @@ using JET
         JET.test_package(PixelFlipper; target_defined_modules=true)
     end
     # Write your tests here.
+    @testset "GPU tests" begin
+        include("test_gpu.jl")
+    end
 end
