@@ -31,7 +31,7 @@ function evaluate(
     ## Compute MIF curve
     npart = ceil(Int, n / pf.steps) # length of a partition
     input_mif = deepcopy(input)
-    p_mif = Progress(pf.steps; desc="Computing MIF curve...", showspeed=pf.show_progress)
+    p_mif = Progress(pf.steps; desc="Computing MIF curve...", enabled=pf.show_progress)
     for (i, range) in Iterators.enumerate(Iterators.partition(1:n, npart))
         # Modify input in-place, iterating over multiple rows of selection at a time
         idxs = selection[range, :]
@@ -45,7 +45,7 @@ function evaluate(
 
     ## Compute LIF curve
     input_lif = deepcopy(input)
-    p_lif = Progress(pf.steps; desc="Computing LIF curve...", showspeed=pf.show_progress)
+    p_lif = Progress(pf.steps; desc="Computing LIF curve...", enabled=pf.show_progress)
     for (i, range) in Iterators.enumerate(Iterators.partition(n:-1:1, npart))
         # Modify input in-place, iterating over multiple rows of selection at a time
         idxs = selection[range, :]
