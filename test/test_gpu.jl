@@ -27,6 +27,7 @@ val_gpu = device(val)
     pf = PixelFlipping(; steps=10, device=Array, show_progress=false)
     res = evaluate(pf, model, input, val)
     @test res isa PixelFlippingResult
+    display(unicode_plot(res))
 end
 
 @testset "Run pixel flipping (GPU)" begin
@@ -34,10 +35,12 @@ end
     @testset "GPU explanation" begin
         res = evaluate(pf, model_gpu, input_gpu, val_gpu)
         @test res isa PixelFlippingResult
+        display(unicode_plot(res))
     end
     # This should be avoided, but can happen when loading explanations from files
     @testset "CPU explanation" begin
         res = evaluate(pf, model_gpu, input_gpu, val)
         @test res isa PixelFlippingResult
+        display(unicode_plot(res))
     end
 end

@@ -10,7 +10,7 @@ using JET
     @testset "Code linting (JET.jl)" begin
         JET.test_package(PixelFlipper; target_defined_modules=true)
     end
-    # Write your tests here.
+
     @testset "GPU tests" begin
         include("test_gpu.jl")
     end

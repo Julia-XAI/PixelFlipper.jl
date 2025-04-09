@@ -35,7 +35,7 @@ function evaluate(
     for (i, range) in Iterators.enumerate(Iterators.partition(1:n, npart))
         # Modify input in-place, iterating over multiple rows of selection at a time
         idxs = selection[range, :]
-        impute!(input_mif[idxs], pf.imputer)
+        impute!(view(input_mif, idxs), pf.imputer)
 
         # Run new forward pass
         output = model(input_mif)
@@ -49,7 +49,7 @@ function evaluate(
     for (i, range) in Iterators.enumerate(Iterators.partition(n:-1:1, npart))
         # Modify input in-place, iterating over multiple rows of selection at a time
         idxs = selection[range, :]
-        impute!(input_lif[idxs], pf.imputer)
+        impute!(view(input_lif, idxs), pf.imputer)
 
         # Run new forward pass
         output = model(input_lif)
