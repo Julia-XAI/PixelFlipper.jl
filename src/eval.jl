@@ -6,13 +6,14 @@
 Run the `PixelFlipping` method on the given model, input and explanation.
 """
 function evaluate(
-    pf::PixelFlipping, model, input::AbstractWHCN{T}, x::AbstractWHCN
+    pf::PixelFlipping, model, input::AbstractWHCN{T}, expl::AbstractWHCN
 ) where {T}
-    selection = select(Array(x), pf.selector)
+    # Doing the selection is easier on CPU
+    expl_cpu = Array(expl)
+    selection_cpu = select(expl_cpu, pf.selector)
+    # Support GPUs if specified
+    selection = pf.device(selection_cpu)
     n, batchsize = size(selection)
-
-    # GPU support
-    selection = pf.device(selection)
 
     # Allocate outputs
     MIF = Vector{T}(undef, pf.steps + 1) # Most influential first
