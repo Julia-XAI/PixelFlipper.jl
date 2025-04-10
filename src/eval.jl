@@ -16,8 +16,8 @@ function evaluate(
     n, batchsize = size(selection)
 
     # Allocate outputs
-    MIF = Vector{T}(undef, pf.steps + 1) # Most influential first
-    LIF = Vector{T}(undef, pf.steps + 1) # Least influential first
+    MIF = zeros(T, pf.steps + 1) # Most influential first
+    LIF = zeros(T, pf.steps + 1) # Least influential first
     occl = collect(range(0.0f0, 1.0f0; length=pf.steps + 1))
 
     # Run initial forward pass
@@ -63,7 +63,12 @@ end
 
 function mean_probability(output, output_selection)
     ps = softmax(output)[output_selection]
-    return mean(ps)
+    pmean = mean(ps)
+    if isnan(pmean)
+        @info "Encountered NaN:" softmax(output) ps pmean
+        return 0
+    end
+    return pmean
 end
 
 # Convenient ways to call PixelFlipping using XAIBase API
