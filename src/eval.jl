@@ -16,9 +16,12 @@ function evaluate(
     n, batchsize = size(selection)
 
     # Allocate outputs
-    MIF = zeros(T, pf.steps + 1) # Most influential first
-    LIF = zeros(T, pf.steps + 1) # Least influential first
+    MIF = Vector{T}(undef, pf.steps + 1) # Most influential first
+    LIF = Vector{T}(undef, pf.steps + 1) # Least influential first
+    fill!(MIF, 0)
+    fill!(LIF, 0)
     occl = collect(range(0.0f0, 1.0f0; length=pf.steps + 1))
+    index_ranges = split_in_ranges(n, pf.steps)
 
     # Run initial forward pass
     output = model(input)
@@ -30,10 +33,9 @@ function evaluate(
     LIF[1] = pmean
 
     ## Compute MIF curve
-    npart = ceil(Int, n / pf.steps) # length of a partition
     input_mif = deepcopy(input)
     p_mif = Progress(pf.steps; desc="Computing MIF curve...", enabled=pf.show_progress)
-    for (i, range) in Iterators.enumerate(Iterators.partition(1:n, npart))
+    for (i, range) in Iterators.enumerate(index_ranges)
         # Modify input in-place, iterating over multiple rows of selection at a time
         idxs = selection[range, :]
         impute!(view(input_mif, idxs), pf.imputer)
@@ -47,7 +49,7 @@ function evaluate(
     ## Compute LIF curve
     input_lif = deepcopy(input)
     p_lif = Progress(pf.steps; desc="Computing LIF curve...", enabled=pf.show_progress)
-    for (i, range) in Iterators.enumerate(Iterators.partition(n:-1:1, npart))
+    for (i, range) in Iterators.enumerate(Iterators.reverse(index_ranges))
         # Modify input in-place, iterating over multiple rows of selection at a time
         idxs = selection[range, :]
         impute!(view(input_lif, idxs), pf.imputer)
@@ -61,13 +63,18 @@ function evaluate(
     return PixelFlippingResult(MIF, LIF, occl)
 end
 
+function split_in_ranges(n, steps)
+    rs = round.(Int, range(0, n; length=steps + 1), RoundNearestTiesUp)
+    return [(a + 1):b for (a, b) in Iterators.zip(rs[1:(end - 1)], rs[2:end])]
+end
+
 function mean_probability(output, output_selection)
     ps = softmax(output)[output_selection]
     pmean = mean(ps)
-    if isnan(pmean)
-        @info "Encountered NaN:" softmax(output) ps pmean
-        return 0
-    end
+    # if isnan(pmean)
+    #     @info "Encountered NaN:" softmax(output) ps pmean
+    #     return 0
+    # end
     return pmean
 end
 
