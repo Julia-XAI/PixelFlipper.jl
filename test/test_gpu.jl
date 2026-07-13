@@ -24,14 +24,14 @@ val_gpu = device(val)
 @test_nowarn model_gpu(input_gpu)
 
 @testset "Run pixel flipping (CPU)" begin
-    pf = PixelFlipping(; steps=10, device=Array, show_progress=false)
+    pf = PixelFlipping(; steps = 10, device = Array, show_progress = false)
     res = evaluate(pf, model, input, val)
     @test res isa PixelFlippingResult
     display(unicode_plot(res))
 end
 
 @testset "Run pixel flipping (GPU)" begin
-    pf = PixelFlipping(; steps=10, device=device, show_progress=false)
+    pf = PixelFlipping(; steps = 10, device = device, show_progress = false)
     @testset "GPU explanation" begin
         res = evaluate(pf, model_gpu, input_gpu, val_gpu)
         @test res isa PixelFlippingResult
