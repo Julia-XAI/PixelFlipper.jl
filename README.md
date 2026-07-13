@@ -11,3 +11,7 @@
 ⚠️ Work in progress ⚠️
 
 Julia implementation of pixel flipping to evaluate XAI methods.
+
+## Acknowledgements
+
+Adrian Hill gratefully acknowledges funding from the German Federal Ministry of Education and Research under the grant BIFOLD26B.
