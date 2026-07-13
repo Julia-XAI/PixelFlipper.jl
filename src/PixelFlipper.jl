@@ -7,7 +7,7 @@ using ProgressMeter: Progress, next!
 using Statistics: mean
 using UnicodePlots: lineplot, lineplot!
 
-const AbstractWHCN{T} = AbstractArray{T,4}
+const AbstractWHCN{T} = AbstractArray{T, 4}
 
 include("utils.jl")
 include("selector.jl")
@@ -31,8 +31,8 @@ Computes pixel flipping curves.
 - `device`: Select array type to run pixel flipping on, e.g. CUDA.jl's `cu` for GPU support. Defaults to CPU `Array`.
 """
 @kwdef struct PixelFlipping{
-    S<:AbstractSelector,I<:AbstractImputer,O<:AbstractOutputSelector,D
-}
+        S <: AbstractSelector, I <: AbstractImputer, O <: AbstractOutputSelector, D,
+    }
     selector::S = DEFAULT_SELECTOR
     imputer::I = DEFAULT_IMPUTER
     output_selector::O = DEFAULT_OUTPUT_SELECTOR

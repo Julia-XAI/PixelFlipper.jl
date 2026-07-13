@@ -8,7 +8,7 @@ abstract type AbstractImputer end
 """
     ConstantImputer(value)
 
-Imputes a constant value into a given array. Defaults to `0.0f0`. 
+Imputes a constant value into a given array. Defaults to `0.0f0`.
 """
 @kwdef struct ConstantImputer{T} <: AbstractImputer
     val::T = 0.0f0

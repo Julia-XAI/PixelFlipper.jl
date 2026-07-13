@@ -19,11 +19,11 @@ function unicode_plot(res::PixelFlippingResult)
     plt = lineplot(
         occl,
         MIF;
-        title="Pixel flipping curve (SRG=$(srg(res)))",
-        name="MIF",
-        xlabel="Occlusion (%)",
-        ylabel="p",
+        title = "Pixel flipping curve (SRG=$(srg(res)))",
+        name = "MIF",
+        xlabel = "Occlusion (%)",
+        ylabel = "p",
     )
-    lineplot!(plt, occl, LIF; color=:cyan, name="LIF")
+    lineplot!(plt, occl, LIF; color = :cyan, name = "LIF")
     return plt
 end

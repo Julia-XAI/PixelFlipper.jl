@@ -68,13 +68,13 @@ function select(x::AbstractWHCN, sel::PixelSelector)
     # Allocate output matrix of indices
     sorted_indices = Matrix{CartesianIndex{4}}(undef, w * h, c * n)
 
-    # For each sample in batch, compute indices of sorted values 
-    for (in, slice) in Iterators.enumerate(eachslice(x_reduced; dims=4))
+    # For each sample in batch, compute indices of sorted values
+    for (in, slice) in Iterators.enumerate(eachslice(x_reduced; dims = 4))
         # Compute sorted vector of `CartesianIndex`es
-        i_perm = sortperm(slice[:]; rev=true)
+        i_perm = sortperm(slice[:]; rev = true)
         Is = CartesianIndices(slice)[i_perm]
 
-        # Rewrite each `CartesianIndex` into a `CartesianIndices` covering all color channels 
+        # Rewrite each `CartesianIndex` into a `CartesianIndices` covering all color channels
         for (i, I) in enumerate(Is)
             iw, ih, _ = Tuple(I) # unpack CartesianIndex
             for ic in 1:c
