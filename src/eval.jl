@@ -1,6 +1,6 @@
 """
     evaluate(pixelflipping, model, input, explanation::Explanation)
-    evaluate(pixelflipping, model, input, values::AbstractArray) 
+    evaluate(pixelflipping, model, input, values::AbstractArray)
     evaluate(pixelflipping, model, input, analyzer::AbstractXAIMethod)
 
 Run the `PixelFlipping` method on the given model, input and explanation.

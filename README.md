@@ -8,4 +8,4 @@
 
 ⚠️ Work in progress ⚠️
 
-Julia implementation of pixel flipping to evaluate XAI methods. 
+Julia implementation of pixel flipping to evaluate XAI methods.
