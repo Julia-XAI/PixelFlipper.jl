@@ -1,16 +1,21 @@
 """
-    evaluate(pixelflipping, model, input, explanation::Explanation)
+    evaluate(pixelflipping, model, input, attribution::Attribution)
     evaluate(pixelflipping, model, input, values::AbstractArray)
     evaluate(pixelflipping, model, input, analyzer::AbstractXAIMethod)
 
-Run the `PixelFlipping` method on the given model, input and explanation.
+Run the `PixelFlipping` method on the given model, input and attribution.
+
+When passed an `Attribution`, color channels are reduced using its `pooling`,
+so that the metric evaluates the same reduction that is visualized in the heatmap.
+When passed a raw WHCN array, the `PixelSelector`'s `reduce` is used instead.
 """
 function evaluate(
-        pf::PixelFlipping, model, input::AbstractWHCN{T}, expl::AbstractWHCN
+        pf::PixelFlipping, model, input::AbstractWHCN{T}, attr::AbstractWHCN;
+        reduction = pf.selector.reduce,
     ) where {T}
     # Doing the selection is easier on CPU
-    expl_cpu = Array(expl)
-    selection_cpu = select(expl_cpu, pf.selector)
+    attr_cpu = Array(attr)
+    selection_cpu = select(attr_cpu, reduction)
     # Support GPUs if specified
     selection = pf.device(selection_cpu)
     n, batchsize = size(selection)
@@ -79,13 +84,15 @@ function mean_probability(output, output_selection)
 end
 
 # Convenient ways to call PixelFlipping using XAIBase API
-function evaluate(pf::PixelFlipping, model, input::AbstractWHCN, expl::Explanation)
-    return evaluate(pf, model, input, expl.val)
+function evaluate(pf::PixelFlipping, model, input::AbstractWHCN, attr::Attribution)
+    # Reduce color channels with the attribution's own pooling,
+    # so the metric evaluates the same reduction that heatmapping visualizes.
+    return evaluate(pf, model, input, attr.val; reduction = attr.pooling)
 end
 
 function evaluate(
         pf::PixelFlipping, model, input::AbstractWHCN, analyzer::AbstractXAIMethod
     )
-    expl = analyze(input, analyzer)
-    return evaluate(pf, model, input, expl)
+    attr = analyze(input, analyzer)
+    return evaluate(pf, model, input, attr)
 end

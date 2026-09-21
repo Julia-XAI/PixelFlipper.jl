@@ -1,31 +1,27 @@
 """
     AbstractSelector
 
-Abstract supertype of all selectors. Given an `Explanation` or WHCN array, all `AbstractSelector` return an iterator of values to be imputed.
+Abstract supertype of all selectors. Given an `Attribution` or WHCN array, all `AbstractSelector` return an iterator of values to be imputed.
 """
 abstract type AbstractSelector end
 
-const DEFAULT_REDUCE = :norm
+const DEFAULT_REDUCE = NormPooling()
 
 """
     PixelSelector()
-    PixelSelector(; reduce=:norm)
+    PixelSelector(; reduce=NormPooling())
 
-Reduces color channels in an `Explanation` according to `reduce` and returns an iterator over the indices of sorted values.
+Reduces color channels in an `Attribution` according to `reduce` and returns an iterator over the indices of sorted values.
 
 ## Keyword arguments
-- `reduce::Symbol`: Selects how color channels are reduced to a single number to apply a color scheme.
-  The following methods can be selected, which are then applied over the color channels
-  for each "pixel" in the array:
-  - `:sum`: sum up color channels
-  - `:norm`: compute 2-norm over the color channels
-  - `:maxabs`: compute `maximum(abs, x)` over the color channels
-  - `:sumabs`: compute `sum(abs, x)` over the color channels
-  - `:abssum`: compute `abs(sum(x))` over the color channels
-  Defaults to `:$DEFAULT_REDUCE`.
+- `reduce::AbstractPooling`: XAIBase pooling used to reduce color channels to a single number per "pixel" before sorting,
+  e.g. `SumPooling`, `NormPooling`, `MaxAbsPooling`, `SumAbsPooling` or `AbsSumPooling`.
+  Defaults to `$DEFAULT_REDUCE`.
+  This is only used for raw WHCN arrays:
+  an `Attribution` reduces channels with its own `pooling` instead (see `evaluate`).
 """
-@kwdef struct PixelSelector <: AbstractSelector
-    reduce::Symbol = DEFAULT_REDUCE
+@kwdef struct PixelSelector{P <: AbstractPooling} <: AbstractSelector
+    reduce::P = DEFAULT_REDUCE
 end
 
 """
@@ -37,7 +33,7 @@ Requires `x` to be in WHCN format, as each column in the output corresponds to a
 ## Example
 ```julia
 julia> selector = PixelSelector()
-PixelSelector(:norm)
+PixelSelector{NormPooling}(NormPooling())
 
 julia> A = randn(1, 2, 2, 2)
 1×2×2×2 Array{Float64, 4}:
@@ -59,11 +55,15 @@ julia> PixelFlipper.select(A, selector)
  CartesianIndex(1, 1, 1, 1)  CartesianIndex(1, 1, 2, 1)  CartesianIndex(1, 2, 1, 2)  CartesianIndex(1, 2, 2, 2)
 ```
 """
-function select(x::AbstractWHCN, sel::PixelSelector)
+select(x::AbstractWHCN, sel::PixelSelector) = select(x, sel.reduce)
+
+# `reduction` is an `AbstractPooling`,
+# either a `PixelSelector`'s `reduce` or the pooling carried by an `Attribution` (see `evaluate`).
+function select(x::AbstractWHCN, reduction)
     w, h, c, n = size(x)
 
     # Reduce color channel
-    x_reduced = reduce_color_channel(x, sel.reduce)
+    x_reduced = reduce_color_channel(x, reduction)
 
     # Allocate output matrix of indices
     sorted_indices = Matrix{CartesianIndex{4}}(undef, w * h, c * n)
