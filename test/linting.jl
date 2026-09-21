@@ -21,10 +21,10 @@ end
     @test check_no_self_qualified_accesses(PixelFlipper) === nothing
 end
 
-# JET's v0.11 series supports Julia v1.12 and above only.
+# JET supports Julia v1.12 and above only.
 if VERSION >= v"1.12"
     @testset "JET.jl" begin
         @info "Running JET.jl type-stability tests."
-        JET.test_package(PixelFlipper; target_defined_modules = true)
+        JET.test_package(PixelFlipper; target_modules = (PixelFlipper,))
     end
 end
